@@ -12,8 +12,6 @@ import connect_pg
 import bcrypt
 import os
 
-from utils.token_verifications import token_required
-
 
 app = Flask(__name__)
 
@@ -32,7 +30,40 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
     return response
     
-    
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if "Authorization" in request.headers:
+            token = request.headers["Authorization"].split(" ")[1]
+        if not token:
+            return {
+                "message": "Authentication Token is missing!",
+                "data": None,
+                "error": "Unauthorized"
+            }, 401
+        try:
+            data=jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+            current_user=get_one_user(data["user_id"])
+            if current_user is None:
+                return {
+                "message": "Invalid Authentication token!",
+                "data": None,
+                "error": "Unauthorized"
+            }, 401
+            if not current_user["active"]:
+                abort(403)
+        except Exception as e:
+            return {
+                "message": "Something went wrong",
+                "data": None,
+                "error": str(e)
+            }, 500
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
+
 def get_book_statement(row) :
     """ Book array statement """
     return {
@@ -50,6 +81,18 @@ def get_book_statement(row) :
 def hello():
     return "Hello"
 
+
+@app.route('/locataire/get/<userID>', methods=['GET','POST'])
+def get_one_user(userID):
+    """ Return book bookId in JSON format """
+    query = "select * from agence.locataire where id=%(userID)s order by id asc" % {'userID':userID}
+    conn = connect_pg.connect()
+    rows = connect_pg.get_query(conn, query)
+    returnStatement = {}
+    if len(rows) > 0:
+        returnStatement = get_user_statement(rows[0])
+    connect_pg.disconnect(conn)
+    return jsonify(returnStatement)
 
 
 def get_users_statement(row) :
@@ -81,14 +124,14 @@ def add_user():
         mail = locataire_data['mail']
         mdp = locataire_data["mdp"]       
         # Hachage du mot de passe
-        mdp_hashed = bcrypt.hashpw(mdp.encode('utf-8'), bcrypt.gensalt())
+        mdp_hashed = bcrypt.generate_password_hash(mdp).decode('utf-8')
 
         # Créez une nouvelle connexion à la base de données
         conn = connect_pg.connect()
         
         # On exécute la requête SQL pour ajouter l'utilisateur à la base de données
         query = [
-            f"INSERT INTO locataire (nom, prenom, mail, mdp) VALUES ('{nom}', '{prenom}', '{mail}', '{mdp_hashed}') RETURNING id" #f pour intriduire des variables dans une string
+            f"INSERT INTO agence.locataire (nom, prenom, mail, mdp) VALUES ('{nom}', '{prenom}', '{mail}', '{mdp_hashed}') RETURNING id" #f pour intriduire des variables dans une string
         ]
         
         locataire_id = connect_pg.execute_commands(conn, query)
@@ -124,7 +167,7 @@ def identify_user():
         conn = connect_pg.connect()
 
         # Vérifiez d'abord si l'utilisateur existe
-        locataire_mdp_query = f"SELECT * FROM locataire WHERE identifiant = {locataire_mail}"
+        locataire_mdp_query = f"SELECT * FROM agence.locataire WHERE mail = '{locataire_mail}'"
         locataire_exists = connect_pg.get_query(conn, locataire_mdp_query)
 
         if not locataire_exists:
@@ -132,6 +175,7 @@ def identify_user():
             return jsonify({"error": "Utilisateur non trouvé"}), 404
 
         #recupération mdp de la BDD
+
         mdp_bdd = locataire_exists[0]["mdp"]
 
         # Vérification du mot de passe
@@ -139,7 +183,7 @@ def identify_user():
             try:
                 # token should expire after 24 hrs
                 user["token"] = jwt.encode(
-                    {"user_id": user["_id"],
+                    {"user_id": user["id"],
                     "exp": datetime.datetime.now(tz=timezone.utc) + datetime.timedelta(minutes=15)},
                     app.config["SECRET_KEY"],
                     algorithm="HS256"
@@ -159,9 +203,8 @@ def identify_user():
  
 
 if __name__ == "__main__":
-    # read server parameters
-    params = config('config.ini', 'server')
-    context = (params['cert'], params['key']) #certificate and key files
-    print("Affichage INFO",params['cert'], params['key'])
-    # Launch Flask server0
-    app.run(debug=params['debug'], host=params['host'], port=params['port'], ssl_context=context)
+  # read server parameters
+  params = config('config.ini', 'server')
+  context = (params['cert'], params['key']) #certificate and key files
+  # Launch Flask server
+  app.run(debug=params['debug'], host=params['host'], port=params['port'], ssl_context=context)
