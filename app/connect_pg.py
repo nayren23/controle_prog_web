@@ -1,54 +1,77 @@
 #!/usr/bin/python
+
 import psycopg2
 from config import config
-import os
-from dotenv import load_dotenv
-
-#Fichier pour faire le lien avec la BDD
+ 
 def connect(filename='config.ini', section='postgresql'):
     """ Connect to the PostgreSQL database server """
     conn = None
     try:
-        params = config(filename, section) # read connection parameters
+        # read connection parameters
+        params = config(filename, section)
+ 
+        # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
-        conn = psycopg2.connect(**params, host=os.getenv("DB_HOST")) # connect to the PostgreSQL server 
+        conn = psycopg2.connect(**params)
+
         conn.set_client_encoding('UTF8')
-        cur = conn.cursor() # create a cursor
+      
+        # create a cursor
+        cur = conn.cursor()
+        
+        # execute a statement
         print('PostgreSQL database version:')
-        cur.execute('SELECT version()') # execute a statement
-        db_version = cur.fetchone() # display the PostgreSQL database server version
+        cur.execute('SELECT version()')
+ 
+        # display the PostgreSQL database server version
+        db_version = cur.fetchone()
         print(db_version)
-        cur.close() # close the communication with the PostgreSQL
+
+        # close the communication with the PostgreSQL
+        cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
-        print("Echec Connexion BDD",error)
+        print(error)
     finally:
         if conn is not None:
             return conn
+            
 
 def disconnect(conn):
-    conn.close() # close the connexion
-    print('Database connection closed.')
+    # close the connexion
+    conn.close() 
+    print('Database connection closed.')  
+
+
+
 
 def execute_commands(conn, commands):
     """ Execute a SQL command """
     cur = conn.cursor()
+
+    returningValue = False 
+
     # create table one by one
     for command in commands:
         if command :
             print(command)
             cur.execute(command)
+            if " returning " in command.lower(): 
+                returningValue = cur.fetchone()[0]
     # close communication with the PostgreSQL database server
     cur.close()
     # commit the changes
-    conn.commit()
+    conn.commit() 
+    if returningValue:
+        return returningValue
+
 
 
 def get_query(conn, query):
     """ query data from db """
     try:
         cur = conn.cursor()
-        cur.execute(query)
-        rows = cur.fetchall()
+        cur.execute(query)  
+        rows = cur.fetchall() 
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -56,5 +79,6 @@ def get_query(conn, query):
         if conn is not None:
             return rows
 
+ 
 if __name__ == '__main__':
     connect()
