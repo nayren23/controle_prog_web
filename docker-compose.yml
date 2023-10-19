@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: api_flask
+    build:
+      args:
+        - REQUIREMENTS_PATH=./requirements.txt
+    ports:
+      - "5500:5050" # On mappe le port qu'utilise l'api que l'on met sur notre port 5500
+    restart: always
+    volumes:
+      - "./app:/var/www/html" #On met tout le code dans le volume var
+    depends_on:
+      - db
+    environment:
+      DB_HOST: bdd_postgre # Nom du container devient le nom de domaine, car dans docker compose on creer un reseau pour toute la stack, c'est pourlancer les requetes d'api avec le bon host
+    
+  db:
+    container_name: bdd_postgre
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: rayan
+      POSTGRES_USER: rayan
+      POSTGRES_DB: database-etudiant
+    volumes:
+      - "./app/script.sql:/docker-entrypoint-initdb.d/script.sql"  #On met notre script SQL dans le volume renseigner dans la dock de dockerHub(Postgre), pour qu'il soit exécuté
+
+  adminer:
+    container_name: adminer_inteface_bdd
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+# Spécifie le nom de projet en utilisant la variable d'environnement COMPOSE_PROJECT_NAME
+x-environment:
+  COMPOSE_PROJECT_NAME: tp_prog_avance

@@ -1,0 +1,65 @@
+Commande connexion bdd:  
+pip3 install flask
+
+
+python3 rest_api.py
+
+url navigateur : http://localhost:5500/books/search/a
+
+
+RUN psql
+RUN \i script.sql;
+
+
+pour se connecter a adminer: 
+
+Systeme: Postgre
+Serveur	: db
+Utilisateur	: rayan
+Mot de passe: rayan	
+Base de données : database-etudiant ou rien
+
+
+Commandes Docker:
+    Lancement: docker-compose up --build
+    Suppression: docker-compose down
+
+
+
+
+Certificats:
+    1  ls
+    2  cd app/
+    3  ls
+    4  mkdir certs
+    5  cd ..
+    6  créer  /etc/hosts à la racine
+    7  clear
+    8  ls
+    9  cd app
+   10  clear
+   11  openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/flask-selfsigned.key -out certs/flask-selfsigned.crt
+
+
+root@587b1094130f:/com.docker.devenvironments.code/app# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/flask-selfsigned.key -out certs/flask-selfsigned.crt
+..........+.+..+...+.......+...+.....+...+.........+.+..+...................+...+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.....+......+...+...+..................+....+.....+...+...+.......+...+......+.....+......+....+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+.....+.+.....+....+...+..+......+...+.......+...+..+....+...+........+...+....+...+..+.+..+..........+...+......+.....+.+.....+...+....+.....+......+.......+........+.......+..+.+...............+..+............+......+.+...+.....+.............+...+..+............+.............+...+..+...+.......+...+.........+....................+.+.....+....+...+........+......+......+....+......+..+...+....+.....+....+...........+...+.+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.....+.+......+..+..........+......+.........+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*...+.+..............+.+.....+....+.....+.+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*......+...+..+...............+.............+..+.+..+...+......+.+..+.............+.........+.....+...+.......+...+..+....+...........+.............+......+..+...+....+........+...+.+.....+.........+......+.+.....+..........+..+......+......+.+........+......+.+.....+.......+.....+.+..+....+..............+....+...+..+...............+.............+........+....+..+............................+..+...+.+............+...+...........+..........+.....+.+...+....................+.+...+....................+.+......+........+.......+...+.....................+.................+....+.....+.+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:FR
+State or Province Name (full name) [Some-State]:Île-de-France
+Locality Name (eg, city) []:Paris 
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:IUT de Montreuil
+Organizational Unit Name (eg, section) []:.
+Common Name (e.g. server FQDN or YOUR name) []:cours_flask.local
+Email Address []:rayanchouchane23@gmail.com
+root@587b1094130f:/com.docker.devenvironments.code/app# 
+
+
+
